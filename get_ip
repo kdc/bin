@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+curl -s ifconfig.io/all.json | jq
+#curl -s ifconfig.io/ip
+#dig +short whoami.akamai.net @ns1-1.akamaitech.net
+#dig TXT +short o-o.myaddr.l.google.com @ns1.google.com
+#dig +short myip.opendns.com  @resolver1.opendns.com
+#dig -4 +short whoami.akamai.net @ns1-1.akamaitech.net a
+#dig -6 +short whoami.akamai.net @2600:1480:1::c1 aaaa

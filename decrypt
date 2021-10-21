@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo "$*" | openssl enc -base64 -d -aes256 -salt | xargs

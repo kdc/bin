@@ -1,0 +1,4 @@
+#!/bin/bash
+
+gcc -Q -c -v -march=native --help=target
+rm help-dummy.o

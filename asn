@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if [[ $1 =~ "as" ]] ; then
+    echo "!g$1" |nc whois.radb.net 43
+    echo "!6$1" |nc whois.radb.net 43
+fi
+
+/usr/bin/whois -h whois.cymru.com " -v $1"

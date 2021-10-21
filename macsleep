@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+no if ($] >= 5.018), 'warnings' => 'experimental';
+
+use feature qw(switch);
+
+sub print_help()
+{
+my $help_message = <<HELP_MESSAGE;
+raw commands:
+nosleep : sudo pmset -b sleep 0; sudo pmset -b disablesleep 1
+sleep : sudo pmset -b sleep 5; sudo pmset -b disablesleep 0
+HELP_MESSAGE
+
+    print $help_message;
+}
+
+given ($ARGV[0]) 
+{
+    when("nosleep") { system("sudo pmset -b sleep 0; sudo pmset -b disablesleep 1"); }
+    when("sleep") { system("sudo pmset -b sleep 5; sudo pmset -b disablesleep 0"); }
+    default { print_help(); }
+}

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+user=$(id -runz | tr -d '\0')
+group=$(id -rgnz | tr -d '\0')
+
+if [[ $1 ]]; then
+	echo running on $1 directory
+	dir=$1
+	sleep 1
+else
+	echo running on current directory
+	dir=$PWD
+	sleep 1
+fi
+
+sudo chown -hR $user:$group $dir
+find $dir -type d -exec chmod 755 {} \;
+find $dir -type f -exec chmod 644 {} \;

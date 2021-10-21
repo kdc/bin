@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+
+pstop(){
+        [[ -n $@ ]] && echo -e "find out the most ressources eating processes" && return 1
+        echo -ne "CpuTop:\t"
+        ps axu|awk '{print $3,$11}'|sort -n|tail -1
+        echo -ne "MemTop:\t"
+        ps axu|awk '{print $4,$11}'|sort -n|tail -1
+}
+
+pstop

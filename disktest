@@ -1,0 +1,3 @@
+#!/bin/bash
+
+dd bs=1M count=512 if=/dev/zero of=/tmp/fasttoffies conv=fdatasync && rm /tmp/fasttoffies
