@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+
+
+class bcolors:
+    OKGREEN = '\033[92m'
+    ENDC = '\033[0m'
+
+
+def print_help():
+    helpmsg = " Check All SubDirectories and git something them "
+    helpmsg += """
+                help: This text
+                status: git status
+                git pull: git status
+               """
+    print(helpmsg)
+
+
+def status():
+    gitrepos = subprocess.run(["find", ".", "-name", ".git"], capture_output=True, universal_newlines=True)
+    for gitpath in gitrepos.stdout.splitlines():
+        print(bcolors.OKGREEN + '{}'.format(gitpath[:-4]) + bcolors.ENDC)
+        subprocess.run(["git", "-C", gitpath[:-4], "status"])
+
+
+def pull():
+    gitrepos = subprocess.run(["find", ".", "-name", ".git"], capture_output=True, universal_newlines=True)
+    for gitpath in gitrepos.stdout.splitlines():
+        print(bcolors.OKGREEN + '{}'.format(gitpath[:-4]) + bcolors.ENDC)
+        subprocess.run(["git", "-C", gitpath[:-4], "pull"])
+
+
+def main():
+    i = sys.argv[1] if len(sys.argv) > 1 else print_help
+    switcher = {"status": status, "pull": pull}
+    func = switcher.get(i, print_help)
+    return func()
+
+
+if __name__ == '__main__':
+    main()
