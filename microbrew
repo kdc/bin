@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import subprocess
+
+
+def brewdate(command):
+    for default_commands in command:
+        if default_commands == "upgrade":
+            print("\nRunning brew", default_commands)
+            subprocess.check_call(['/opt/homebrew/bin/brew', default_commands, "--greedy-auto-updates"])
+        else:
+            print("\nRunning brew", default_commands, "\n")
+            subprocess.check_call(['/opt/homebrew/bin/brew', default_commands])
+
+
+def brewdate_services(command):
+    for default_commands in command:
+        print("\nRunning brew services", default_commands, "\n")
+        subprocess.check_call(['/opt/homebrew/bin/brew',
+                               'services',
+                               default_commands
+                               ])
+
+
+# /opt/homebrew/bin/brew rm $1
+# /opt/homebrew/bin/brew rm $(join <(/opt/homebrew/bin/brew leaves) \
+# <(/opt/homebrew/bin/brew deps $1))
+
+
+def main():
+    THE_LIST = ['update', 'upgrade',
+                'outdated', 'cleanup',
+                'missing', 'autoremove']
+    SERVICES_LIST = ['cleanup']
+
+    brewdate(THE_LIST)
+    brewdate_services(SERVICES_LIST)
+
+
+if __name__ == '__main__':
+    main()
