@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+import requests
+import json
+from base64 import b64encode
+
+
+def list_registry_contents(registry_url, auth):
+    print("\nRegistry Contents:")
+    print("=================")
+
+    catalog = requests.get(f"{registry_url}/v2/_catalog", auth=auth).json()
+
+    for repo in catalog['repositories']:
+        tags = requests.get(f"{registry_url}/v2/{repo}/tags/list", auth=auth).json()
+        print(f"\nRepository: {repo}")
+        print("Tags:", tags.get('tags', []))
+
+
+def main():
+    # Configuration
+    REGISTRY_URL = ""
+    USERNAME = ""
+    PASSWORD = ""
+    AUTH = (USERNAME, PASSWORD)
+
+    list_registry_contents(REGISTRY_URL, AUTH)
+
+if __name__ == "__main__":
+    main()
