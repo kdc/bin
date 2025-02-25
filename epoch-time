@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import sys
+import time
+import argparse
+
+
+def etod(epochtime):
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(epochtime)))
+
+
+def dtoe(datetime):
+    timestruct = time.strptime(datetime, "%Y-%m-%d %H:%M:%S")
+    print(time.mktime(timestruct))
+
+
+def now():
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Time Converter")
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-e", "--etod", action="store", type=int, help="Epoch to Date/Time")
+    parser.add_argument("-t", "--dtoe", action="store", type=str, help="Date/Time to Epoch")
+    parser.add_argument("-n", "--now", action="store_true", help="prints epoch time for now()")
+    args = parser.parse_args()
+
+    if (args.etod and args.dtoe):
+        parser.print_help()
+        sys.exit(1)
+    elif args.etod:
+        etod(args.etod)
+    elif args.dtoe:
+        dtoe(args.dtoe)
+    elif args.now:
+        now()
+    else:
+        print("-h, --help  shows a help message")
+
+if __name__ == '__main__':
+    main()
