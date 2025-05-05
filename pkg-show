@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+if [ -z "$1" ]; then
+    echo "Usage: pkg-show <package>"
+    exit 1
+fi
+pkg rquery '%n\nVersion: %v\nDescription: %c\nLong Description: %e\nWebsite: %w\nMaintainer: %m\nSize: %sh\nDependencies: %dn-%dv\n' "$1"
