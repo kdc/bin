@@ -3,4 +3,8 @@
 import os
 import sys
 
+if len(sys.argv) < 2:
+    print("Usage: realpath <path>", file=sys.stderr)
+    sys.exit(1)
+
 print(os.path.realpath(sys.argv[1]))

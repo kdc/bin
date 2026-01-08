@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
-
 pstop(){
-        [[ -n $@ ]] && echo -e "find out the most ressources eating processes" && return 1
+        if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+                echo "pstop - find the most resource eating processes"
+                echo "Usage: pstop"
+                return 0
+        fi
         echo -ne "CpuTop:\t"
         ps axu|awk '{print $3,$11}'|sort -n|tail -1
         echo -ne "MemTop:\t"
         ps axu|awk '{print $4,$11}'|sort -n|tail -1
 }
 
-pstop
+pstop "$@"
