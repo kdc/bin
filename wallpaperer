@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+sudo chflags nouchg /Library/Desktop/Wallpaper.jpg
+
+wallpapers=(~/Downloads/wallpapers/*)
+wallpaper="${wallpapers[RANDOM % ${#wallpapers[@]}]}"
+sudo cp "$wallpaper" /Library/Desktop/Wallpaper.jpg
+
+sudo chflags uchg /Library/Desktop/Wallpaper.jpg
+
+echo open "$wallpaper"
