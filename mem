@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 
-# Get number of processes to display from command line, default to 500
 my $num_procs = $ARGV[0] || 500;
 
 my $os = `uname`;
@@ -23,16 +22,13 @@ foreach my $line (@topsum)
 {
     if ($inlist == 1)
     {
-        # Trim leading whitespace before splitting
         $line =~ s/^\s+//;
         my @curline = split(/\s+/,$line);
 
         if ($os eq "Darwin") {
-            # macOS: COMMAND is column 1, MEM is column 7
             my $cmd = $curline[1];
             my $mem = $curline[7];
 
-            # Convert memory string (e.g., "15M", "2688K", "1G") to KB
             if (defined $mem && $mem =~ /^(\d+(?:\.\d+)?)(K|M|G|B)/) {
                 my ($val, $unit) = ($1, $2);
                 my $kb = 0;
@@ -46,7 +42,6 @@ foreach my $line (@topsum)
                 ++$cumulativemem{$cmd}[1];
             }
         } else {
-            # Linux: use original logic
             $cumulativemem{$curline[-1]}[0] += $curline[-3];
             ++$cumulativemem{$curline[-1]}[1];
         }
@@ -66,7 +61,6 @@ foreach (sort {$cumulativemem{$b}[0] <=> $cumulativemem{$a}[0]} keys %cumulative
     if ($cumulativemem{$_}[0] > 0) {
         my $mem_display;
         if ($os eq "Darwin") {
-            # Convert KB to MB for readability
             $mem_display = sprintf("%.1fM", $cumulativemem{$_}[0] / 1024);
         } else {
             $mem_display = $cumulativemem{$_}[0];
