@@ -14,7 +14,7 @@ def print_help():
     helpmsg += """
                 help: This text
                 status: git status
-                git pull: git status
+                pull: git pull
                """
     print(helpmsg)
 

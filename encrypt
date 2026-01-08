@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 
-echo -n $* | openssl enc -base64 -e -aes256 -salt
+if [[ -z "$*" ]]; then
+    echo "Usage: encrypt <string_to_encrypt>" >&2
+    exit 1
+fi
+
+if ! echo -n "$*" | openssl enc -base64 -e -aes256 -salt 2>/dev/null; then
+    echo "Error: Encryption failed." >&2
+    exit 1
+fi

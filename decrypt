@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 
-echo "$*" | openssl enc -base64 -d -aes256 -salt | xargs
+if [[ -z "$*" ]]; then
+    echo "Usage: decrypt <encrypted_string>" >&2
+    exit 1
+fi
+
+if ! echo "$*" | openssl enc -base64 -d -aes256 -salt 2>/dev/null | xargs; then
+    echo "Error: Decryption failed. Check your password or input." >&2
+    exit 1
+fi

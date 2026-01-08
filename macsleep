@@ -2,9 +2,6 @@
 
 use strict;
 use warnings;
-no if ($] >= 5.018), 'warnings' => 'experimental';
-
-use feature qw(switch);
 
 sub print_help()
 {
@@ -17,9 +14,14 @@ HELP_MESSAGE
     print $help_message;
 }
 
-given ($ARGV[0]) 
-{
-    when("nosleep") { system("sudo pmset -b sleep 0; sudo pmset -b disablesleep 1"); }
-    when("sleep") { system("sudo pmset -b sleep 5; sudo pmset -b disablesleep 0"); }
-    default { print_help(); }
+my $cmd = $ARGV[0] // '';
+
+if ($cmd eq "nosleep") {
+    system("sudo pmset -b sleep 0; sudo pmset -b disablesleep 1");
+}
+elsif ($cmd eq "sleep") {
+    system("sudo pmset -b sleep 5; sudo pmset -b disablesleep 0");
+}
+else {
+    print_help();
 }

@@ -19,8 +19,7 @@ def now():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Time Converter")
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description="Time Converter", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-e", "--etod", action="store", type=int, help="Epoch to Date/Time")
     parser.add_argument("-t", "--dtoe", action="store", type=str, help="Date/Time to Epoch")
     parser.add_argument("-n", "--now", action="store_true", help="prints epoch time for now()")

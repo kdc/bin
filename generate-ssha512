@@ -1,12 +1,13 @@
 #!/usr/bin/env php
 <?php
 
-if ($argc > 1) {
+if ($argc > 2) {
     $salt = $argv[1];
     $password = $argv[2];
     $hash = "{SSHA512}".base64_encode(hash('sha512', $password.$salt, true).$salt);
     echo $hash . "\n";
 } else {
     echo "Usage: generate-ssha512 <salt> <password>\n";
+    exit(1);
 }
 ?>

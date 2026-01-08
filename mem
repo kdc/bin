@@ -1,9 +1,19 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
 
-my @topsum = `top -n 1 -b`;
+# Detect OS and set appropriate top command
+my $os = `uname`;
+chomp($os);
+
+my @topsum;
+if ($os eq "Darwin") {
+    @topsum = `top -l 1 -n 0`;
+} else {
+    @topsum = `top -n 1 -b`;
+}
+
 my %cumulativemem;
 my $inlist = 0;
 
@@ -12,10 +22,18 @@ foreach my $line (@topsum)
     if ($inlist == 1)
     {
         my @curline = split(/\s+/,$line);
-        $cumulativemem{$curline[-1]}[0] += $curline[-3];
-        ++$cumulativemem{$curline[-1]}[1];
+        # Handle different column positions for different OS
+        if ($os eq "Darwin") {
+            # macOS: MEM column is different
+            $cumulativemem{$curline[1]}[0] += $curline[7] if defined $curline[7];
+            ++$cumulativemem{$curline[1]}[1];
+        } else {
+            # Linux
+            $cumulativemem{$curline[-1]}[0] += $curline[-3];
+            ++$cumulativemem{$curline[-1]}[1];
+        }
     }
-    $inlist = 1 if ($line =~ /^\s+PID/);
+    $inlist = 1 if ($line =~ /^\s*PID/ || $line =~ /^PID/);
 }
 
 print "\n\tMem%\tCmd [num instances]\n\n";
