@@ -3,13 +3,15 @@
 use strict;
 use warnings;
 
-# Detect OS and set appropriate top command
+# Get number of processes to display from command line, default to 500
+my $num_procs = $ARGV[0] || 500;
+
 my $os = `uname`;
 chomp($os);
 
 my @topsum;
 if ($os eq "Darwin") {
-    @topsum = `top -l 1 -n 0`;
+    @topsum = `top -l 1 -n $num_procs`;
 } else {
     @topsum = `top -n 1 -b`;
 }
@@ -21,14 +23,30 @@ foreach my $line (@topsum)
 {
     if ($inlist == 1)
     {
+        # Trim leading whitespace before splitting
+        $line =~ s/^\s+//;
         my @curline = split(/\s+/,$line);
-        # Handle different column positions for different OS
+
         if ($os eq "Darwin") {
-            # macOS: MEM column is different
-            $cumulativemem{$curline[1]}[0] += $curline[7] if defined $curline[7];
-            ++$cumulativemem{$curline[1]}[1];
+            # macOS: COMMAND is column 1, MEM is column 7
+            my $cmd = $curline[1];
+            my $mem = $curline[7];
+
+            # Convert memory string (e.g., "15M", "2688K", "1G") to KB
+            if (defined $mem && $mem =~ /^(\d+(?:\.\d+)?)(K|M|G|B)/) {
+                my ($val, $unit) = ($1, $2);
+                my $kb = 0;
+
+                if ($unit eq 'K') { $kb = $val; }
+                elsif ($unit eq 'M') { $kb = $val * 1024; }
+                elsif ($unit eq 'G') { $kb = $val * 1024 * 1024; }
+                elsif ($unit eq 'B') { $kb = $val / 1024; }
+
+                $cumulativemem{$cmd}[0] += $kb;
+                ++$cumulativemem{$cmd}[1];
+            }
         } else {
-            # Linux
+            # Linux: use original logic
             $cumulativemem{$curline[-1]}[0] += $curline[-3];
             ++$cumulativemem{$curline[-1]}[1];
         }
@@ -36,12 +54,25 @@ foreach my $line (@topsum)
     $inlist = 1 if ($line =~ /^\s*PID/ || $line =~ /^PID/);
 }
 
-print "\n\tMem%\tCmd [num instances]\n\n";
+if ($os eq "Darwin") {
+    print "\n\tMem(MB)\tCmd [num instances]\n\n";
+} else {
+    print "\n\tMem%\tCmd [num instances]\n\n";
+}
 
 my $count = 0;
 foreach (sort {$cumulativemem{$b}[0] <=> $cumulativemem{$a}[0]} keys %cumulativemem)
 {
-    print "\t$cumulativemem{$_}[0]\t$_ \[$cumulativemem{$_}[1]\]\n" if ($cumulativemem{$_}[0] > 0);
+    if ($cumulativemem{$_}[0] > 0) {
+        my $mem_display;
+        if ($os eq "Darwin") {
+            # Convert KB to MB for readability
+            $mem_display = sprintf("%.1fM", $cumulativemem{$_}[0] / 1024);
+        } else {
+            $mem_display = $cumulativemem{$_}[0];
+        }
+        print "\t$mem_display\t$_ \[$cumulativemem{$_}[1]\]\n";
+    }
     ++$count;
     if ($count == 25) {print "\n"; last}
 }
