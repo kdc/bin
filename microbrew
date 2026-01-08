@@ -1,40 +1,190 @@
 #!/usr/bin/env python3
 
 import subprocess
+import sys
+import time
+import argparse
+import shutil
 
 
-def brewdate(command):
-    for default_commands in command:
-        if default_commands == "upgrade":
-            print("\nRunning brew", default_commands)
-            subprocess.check_call(['/opt/homebrew/bin/brew', default_commands, "--greedy-auto-updates"])
+class Colors:
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+
+def find_brew():
+    brew_path = shutil.which('brew')
+    if brew_path:
+        return brew_path
+
+    common_paths = [
+        '/opt/homebrew/bin/brew',
+        '/usr/local/bin/brew',
+    ]
+
+    for path in common_paths:
+        if shutil.which(path):
+            return path
+
+    print(f"{Colors.RED}Error: Homebrew not found. Please install it first.{Colors.RESET}", file=sys.stderr)
+    sys.exit(1)
+
+
+def run_brew_command(brew_path, command, extra_args=None):
+    cmd_args = [brew_path] + ([command] if isinstance(command, str) else command)
+    if extra_args:
+        cmd_args.extend(extra_args)
+
+    cmd_display = ' '.join(cmd_args[1:])
+    print(f"\n{Colors.BOLD}{Colors.CYAN}▶ Running: brew {cmd_display}{Colors.RESET}")
+
+    start_time = time.time()
+    try:
+        result = subprocess.run(
+            cmd_args,
+            capture_output=False,
+            text=True,
+            check=False
+        )
+        elapsed = time.time() - start_time
+
+        if result.returncode == 0:
+            print(f"{Colors.GREEN}✓ Completed in {elapsed:.2f}s{Colors.RESET}")
+            return True, elapsed, None
         else:
-            print("\nRunning brew", default_commands, "\n")
-            subprocess.check_call(['/opt/homebrew/bin/brew', default_commands])
+            print(f"{Colors.RED}✗ Failed with exit code {result.returncode} ({elapsed:.2f}s){Colors.RESET}")
+            return False, elapsed, f"brew {cmd_display} failed with exit code {result.returncode}"
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print(f"{Colors.RED}✗ Exception: {e} ({elapsed:.2f}s){Colors.RESET}")
+        return False, elapsed, f"brew {cmd_display} raised exception: {e}"
 
 
-def brewdate_services(command):
-    for default_commands in command:
-        print("\nRunning brew services", default_commands, "\n")
-        subprocess.check_call(['/opt/homebrew/bin/brew',
-                               'services',
-                               default_commands
-                               ])
+def run_brew_commands(brew_path, commands):
+    results = []
+    total_time = 0
+
+    for cmd in commands:
+        if isinstance(cmd, tuple):
+            command, extra_args = cmd
+            success, elapsed, error = run_brew_command(brew_path, command, extra_args)
+        else:
+            success, elapsed, error = run_brew_command(brew_path, cmd)
+
+        results.append((cmd, success, elapsed, error))
+        total_time += elapsed
+
+    return results, total_time
 
 
-# /opt/homebrew/bin/brew rm $1
-# /opt/homebrew/bin/brew rm $(join <(/opt/homebrew/bin/brew leaves) \
-# <(/opt/homebrew/bin/brew deps $1))
+def run_brew_services(brew_path, commands):
+    results = []
+    total_time = 0
+
+    for cmd in commands:
+        full_cmd = ['services', cmd]
+        success, elapsed, error = run_brew_command(brew_path, full_cmd)
+        results.append((f"services {cmd}", success, elapsed, error))
+        total_time += elapsed
+
+    return results, total_time
+
+
+def print_summary(all_results, total_time):
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BLUE}Summary{Colors.RESET}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 60}{Colors.RESET}\n")
+
+    success_count = 0
+    failure_count = 0
+    errors = []
+
+    for cmd, success, elapsed, error in all_results:
+        cmd_display = cmd if isinstance(cmd, str) else ' '.join(cmd) if isinstance(cmd, list) else str(cmd[0])
+        status = f"{Colors.GREEN}✓{Colors.RESET}" if success else f"{Colors.RED}✗{Colors.RESET}"
+        print(f"{status} {cmd_display:<30} {elapsed:>6.2f}s")
+
+        if success:
+            success_count += 1
+        else:
+            failure_count += 1
+            if error:
+                errors.append(error)
+
+    print(f"\n{Colors.BOLD}Total time: {total_time:.2f}s{Colors.RESET}")
+    print(f"{Colors.GREEN}Success: {success_count}{Colors.RESET} | {Colors.RED}Failed: {failure_count}{Colors.RESET}")
+
+    if errors:
+        print(f"\n{Colors.BOLD}{Colors.RED}Errors:{Colors.RESET}")
+        for i, error in enumerate(errors, 1):
+            print(f"  {i}. {error}")
+        return False
+
+    return True
 
 
 def main():
-    THE_LIST = ['update', 'upgrade',
-                'outdated', 'cleanup',
-                'missing', 'autoremove']
-    SERVICES_LIST = ['cleanup']
+    parser = argparse.ArgumentParser(
+        description="Homebrew maintenance utility",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--no-upgrade', action='store_true',
+        help='Skip the upgrade step'
+    )
+    parser.add_argument(
+        '--no-services', action='store_true',
+        help='Skip services cleanup'
+    )
+    parser.add_argument(
+        '--commands', nargs='+',
+        help='Custom list of brew commands to run'
+    )
 
-    brewdate(THE_LIST)
-    brewdate_services(SERVICES_LIST)
+    args = parser.parse_args()
+
+    brew_path = find_brew()
+    print(f"{Colors.CYAN}Using brew at: {brew_path}{Colors.RESET}\n")
+
+    if args.commands:
+        main_commands = args.commands
+    else:
+        main_commands = [
+            'update',
+            ('upgrade', ['--greedy-auto-updates']),
+            'outdated',
+            'cleanup',
+            'autoremove'
+        ]
+
+        if args.no_upgrade:
+            main_commands = [
+                cmd for cmd in main_commands
+                if cmd != 'upgrade' and (isinstance(cmd, tuple) and cmd[0] != 'upgrade')
+            ]
+
+    services_commands = [] if args.no_services else ['cleanup']
+
+    start_time = time.time()
+    all_results = []
+
+    main_results, main_time = run_brew_commands(brew_path, main_commands)
+    all_results.extend(main_results)
+
+    if services_commands:
+        services_results, services_time = run_brew_services(brew_path, services_commands)
+        all_results.extend(services_results)
+
+    total_time = time.time() - start_time
+
+    success = print_summary(all_results, total_time)
+
+    sys.exit(0 if success else 1)
 
 
 if __name__ == '__main__':
